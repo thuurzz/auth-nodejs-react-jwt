@@ -1,4 +1,5 @@
 import Router from "next/router";
+import { setCookie } from "nookies";
 import { createContext, ReactNode, useState } from "react";
 import { api } from "../services/api";
 
@@ -40,6 +41,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // extrai lista de permissions e roles
       const { token, refreshToken, permissions, roles } = resp.data;
+
+      setCookie(undefined, "nextauth.token", token, {
+        maxAge: 60 * 60 * 24 * 30, // 30 dias,
+        path: "/",
+      });
+      setCookie(undefined, "nextauth.refreshToken", refreshToken, {
+        maxAge: 60 * 60 * 24 * 30, // 30 dias,
+        path: "/",
+      });
 
       // caso tudo retorne, cria usuario
       setUser({
