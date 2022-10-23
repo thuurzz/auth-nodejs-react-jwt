@@ -1,6 +1,6 @@
 import Router from "next/router";
-import { setCookie } from "nookies";
-import { createContext, ReactNode, useState } from "react";
+import { parseCookies, setCookie } from "nookies";
+import { createContext, ReactNode, useEffect, useState } from "react";
 import { api } from "../services/api";
 
 type SingInCredentials = {
@@ -31,6 +31,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // usuario so estara presente, caso autenticacao true
   const isAuthenticated = !!user;
 
+  useEffect(() => {
+    const { "nextauth.token": token } = parseCookies();
+    if (token) {
+      api.get("/me").then((resp) => {
+        const { email, roles, permissions } = resp.data;
+        setUser({ email, roles, permissions });
+      });
+    }
+  }, []);
+
   async function singIn({ email, password }: SingInCredentials) {
     try {
       // realiza chamada para a api que autentica no backend
@@ -57,6 +67,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         permissions,
         roles,
       });
+
+      // atualiza headers ante de redirecionar usuario
+      api.defaults.headers["Authorization"] = `Bearer ${token}`;
 
       // redireciona usuario para a rota
       Router.push("/dashboard");
